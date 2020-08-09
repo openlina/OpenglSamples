@@ -29,19 +29,19 @@
 
 */
 
-const GLchar *VertexShaderSource = "#version 330 coren\
-layout(location = 0) in vec3 position;\
-void main()\
-{\
-	gl_Position = vec4(position.x, position.y, position.z, 1.0);\
-}";
+const GLchar *VertexShaderSource = "#version 330 core \n"
+"layout(location = 0) in vec3 position;\n"
+"void main()\n"
+"{\n"
+"	gl_Position = vec4(position.x, position.y, position.z, 1.0);\n"
+"}";
 
-const GLchar *FragmentShaderSource = "#version 330 core\
-out vec4 color;\
-void main()\
-{\
-	color = vec4(1.0f, 0.5f, 0.2f, 1.0f);\
-}";
+const GLchar *FragmentShaderSource = "#version 330 core\n"
+"out vec4 color;\n"
+"void main()\n"
+"{\n"
+"	color = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+"}";
 
 GLfloat vertices[] = {
 	-0.5f, -0.5f, 0.0f,
@@ -59,12 +59,29 @@ void windowContentScaleCallback(GLFWwindow*, float xscale, float yscal) {
 }
 
 
-void draw()
+int main()
 {
-	GLuint VBO;//定义顶点缓冲对象
-	glGenBuffers(1, &VBO); //生成顶点缓冲对象
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);//将顶点缓冲对象绑定到 GL_ARRAY_BUFFER目标中
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);//将顶点数据复制到缓冲的内存中
+	glfwInit(); //glfw 初始化
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	GLFWwindow *window = glfwCreateWindow(640, 480, "window", /*glfwGetPrimaryMonitor()*/nullptr, nullptr);
+
+	if (window == nullptr) {
+		goto END;
+	}
+
+	//glfwSetWindowMonitor(window, glfwGetPrimaryMonitor(), 0, 0, 640, 480, 15);全屏模式
+
+	glfwShowWindow(window);
+	glfwMakeContextCurrent(window);
+
+	glfwSetFramebufferSizeCallback(window, frameBufferSizeCallback);
+	glfwSetWindowContentScaleCallback(window, windowContentScaleCallback);
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+		std::cout << "Failed to initialize GLAD" << std::endl;
+		return -1;
+	}
 
 	//顶点着色器， 用于存储顶点信息
 	GLuint vertexShader; //顶点着色器
@@ -107,33 +124,17 @@ void draw()
 		cout << "link shader program failed: " << logInfo << endl;
 	}
 
-}
+	GLuint VBO, VAO;//定义顶点缓冲对象
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO); //生成顶点缓冲对象
+	glBindVertexArray(VAO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);//将顶点缓冲对象绑定到 GL_ARRAY_BUFFER目标中
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);//将顶点数据复制到缓冲的内存中
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
 
-int main()
-{
-	glfwInit(); //glfw 初始化
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	GLFWwindow *window = glfwCreateWindow(640, 480, "window", /*glfwGetPrimaryMonitor()*/nullptr, nullptr);
-
-	if (window == nullptr) {
-		goto END;
-	}
-
-	//glfwSetWindowMonitor(window, glfwGetPrimaryMonitor(), 0, 0, 640, 480, 15);全屏模式
-
-	glfwShowWindow(window);
-	glfwMakeContextCurrent(window);
-
-	glfwSetFramebufferSizeCallback(window, frameBufferSizeCallback);
-	glfwSetWindowContentScaleCallback(window, windowContentScaleCallback);
-	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-		std::cout << "Failed to initialize GLAD" << std::endl;
-		return -1;
-	}
-
-	draw();
 
 	while (!glfwWindowShouldClose(window)) {
 
@@ -144,8 +145,13 @@ int main()
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		glfwSwapBuffers(window);
 		glfwPollEvents();
+
+		glUseProgram(shaderProgram);
+		glBindVertexArray(VAO);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glBindVertexArray(0);
+		glfwSwapBuffers(window);
 	}
 
 END:
